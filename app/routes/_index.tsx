@@ -6,6 +6,7 @@ import type {
   FeaturedCollectionFragment,
   RecommendedProductsQuery,
 } from 'storefrontapi.generated';
+import type {FasttifyProduct, ProductImage} from 'types/products';
 
 export const meta: MetaFunction = () => {
   return [{title: 'Hydrogen | Home'}];
@@ -42,16 +43,16 @@ async function loadCriticalData({context}: LoaderFunctionArgs) {
  * Make sure to not throw any errors here, as it will cause the page to 500.
  */
 function loadDeferredData({context}: LoaderFunctionArgs) {
-  const recommendedProducts = context.storefront
-    .query(RECOMMENDED_PRODUCTS_QUERY)
+  // Obtenemos productos desde Fasttify en lugar de Shopify
+  const fasttifyProducts = context.fasttify
+    .fetchProducts('6c13a0d')
     .catch((error) => {
-      // Log query errors, but don't throw them so the page can still render
-      console.error(error);
+      console.error('Error fetching Fasttify products:', error);
       return null;
     });
 
   return {
-    recommendedProducts,
+    fasttifyProducts,
   };
 }
 
@@ -60,7 +61,7 @@ export default function Homepage() {
   return (
     <div className="home">
       <FeaturedCollection collection={data.featuredCollection} />
-      <RecommendedProducts products={data.recommendedProducts} />
+      <RecommendedFasttifyProducts products={data.fasttifyProducts} />
     </div>
   );
 }
@@ -87,39 +88,63 @@ function FeaturedCollection({
   );
 }
 
-function RecommendedProducts({
+function RecommendedFasttifyProducts({
   products,
 }: {
-  products: Promise<RecommendedProductsQuery | null>;
+  products: Promise<FasttifyProduct[] | null>;
 }) {
   return (
     <div className="recommended-products">
-      <h2>Recommended Products</h2>
-      <Suspense fallback={<div>Loading...</div>}>
+      <h2>Productos Recomendados</h2>
+      <Suspense fallback={<div>Cargando productos...</div>}>
         <Await resolve={products}>
-          {(response) => (
-            <div className="recommended-products-grid">
-              {response
-                ? response.products.nodes.map((product) => (
+          {(fasttifyProducts) => {
+            if (!fasttifyProducts || !Array.isArray(fasttifyProducts)) {
+              return <div>No se encontraron productos</div>;
+            }
+
+            return (
+              <div className="recommended-products-grid">
+                {fasttifyProducts.map((product) => {
+                  const images: ProductImage[] =
+                    typeof product.images === 'string'
+                      ? (JSON.parse(product.images) as ProductImage[])
+                      : product.images;
+
+                  return (
                     <Link
                       key={product.id}
                       className="recommended-product"
-                      to={`/products/${product.handle}`}
+                      to={`/products/${product.id}`}
                     >
-                      <Image
-                        data={product.images.nodes[0]}
-                        aspectRatio="1/1"
-                        sizes="(min-width: 45em) 20vw, 50vw"
-                      />
-                      <h4>{product.title}</h4>
+                      {images && images.length > 0 && (
+                        <Image
+                          data={{
+                            url: images[0].url,
+                            altText: images[0].alt || product.name,
+                            width: 500,
+                            height: 500,
+                            id: `img-${product.id}`,
+                          }}
+                          aspectRatio="1/1"
+                          sizes="(min-width: 45em) 20vw, 50vw"
+                        />
+                      )}
+                      <h4>{product.name}</h4>
                       <small>
-                        <Money data={product.priceRange.minVariantPrice} />
+                        <Money
+                          data={{
+                            amount: product.price.toString(),
+                            currencyCode: 'COP',
+                          }}
+                        />
                       </small>
                     </Link>
-                  ))
-                : null}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            );
+          }}
         </Await>
       </Suspense>
       <br />

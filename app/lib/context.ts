@@ -1,4 +1,5 @@
 import {createHydrogenContext} from '@shopify/hydrogen';
+import {createFasttifyClient} from './fasttifyClient.server';
 import {AppSession} from '~/lib/session';
 import {CART_QUERY_FRAGMENT} from '~/lib/fragments';
 import {getLocaleFromRequest} from '~/lib/i18n';
@@ -37,8 +38,14 @@ export async function createAppLoadContext(
     },
   });
 
+  const fasttify = createFasttifyClient({
+    cache,
+    waitUntil: executionContext.waitUntil.bind(executionContext),
+    request,
+  });
+
   return {
     ...hydrogenContext,
-    // declare additional Remix loader context
+    fasttify,
   };
 }

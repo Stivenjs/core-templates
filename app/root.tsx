@@ -43,19 +43,20 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
  * It's a temporary fix until the issue is resolved.
  * https://github.com/remix-run/remix/issues/9242
  */
-export function links() {
-  return [
-    {
-      rel: 'preconnect',
-      href: 'https://cdn.shopify.com',
-    },
-    {
-      rel: 'preconnect',
-      href: 'https://shop.app',
-    },
-    {rel: 'icon', type: 'image/svg+xml', href: favicon},
-  ];
-}
+
+  export function links() {
+    return [
+      {
+        rel: 'preconnect',
+        href: 'https://cdn.shopify.com',
+      },
+      {
+        rel: 'preconnect',
+        href: 'https://shop.app',
+      },
+      {rel: 'icon', type: 'image/svg+xml', href: favicon},
+    ];
+  }
 
 export async function loader(args: LoaderFunctionArgs) {
   // Start fetching non-critical data without blocking time to first byte

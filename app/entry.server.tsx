@@ -16,6 +16,17 @@ export default async function handleRequest(
       checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
       storeDomain: context.env.PUBLIC_STORE_DOMAIN,
     },
+    styleSrc: ['self', 'unsafe-inline', 'https://cdn.shopify.com'],
+    imgSrc: [
+      'self',
+      'data:',
+      'https://axklpoqdb7.execute-api.us-east-2.amazonaws.com',
+      'https://*.amazonaws.com',
+      'https://*.cloudfront.net',
+      'https://cdn.shopify.com',
+      'https://shopify.com',
+    ],
+    connectSrc: ['self', 'https://monorail-edge.shopifysvc.com'],
   });
 
   const body = await renderToReadableStream(
